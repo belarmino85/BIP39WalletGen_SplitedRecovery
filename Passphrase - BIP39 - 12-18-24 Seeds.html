@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seed Generator - Passphrase - BIP39</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #3182ce;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .main-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        .column-container {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px;
+            text-align: center;
+        }
+        .seed-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .seed-number {
+            font-weight: bold;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        input[type="text"] {
+            padding: 8px;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="text"]:not([readonly]) {
+            background-color: #ffffff;
+        }
+        input[type="text"][readonly] {
+            background-color: #aaa;
+            cursor: default;
+        }
+        input[type="text"].found {
+            background-color: #28a745;
+        }
+        input[type="text"].not-found {
+            background-color: #dc3545;
+        }
+        input[type="text"].duplicate {
+            background-color: #ff6347;
+        }
+        .results-container {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        .result {
+            background-color: #1c1c1c;
+            border-radius: 5px;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .result-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .result-section span {
+            font-weight: bold;
+            width: 100%;
+            text-align: left;
+        }
+        .toggle-visibility {
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #aaa;
+            margin-left: 5px;
+            text-align: right;
+            display: block;
+            width: 100%;
+        }
+        .flex-input {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .hash-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            width: 100%;
+        }
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            background-color: #1c1c1c;
+            color: #3182ce;
+            border: 1px solid #3182ce;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #2c5aa0;
+        }
+        button.clear {
+            background-color: #6c757d;
+        }
+        button.clear:hover {
+            background-color: #5a6268;
+        }
+        .copy-hint {
+            font-size: 0.8em;
+            color: #888;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .passphrase-container {
+            background-color: #1c1c1c;
+            border-radius: 5px;
+            padding: 10px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .hash-checker-container {
+            background-color: #1c1c1c;
+            border-radius: 5px;
+            padding: 10px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <h2>Seed Generator - Passphrase - BIP39</h2>
+    
+    <div class="controls">
+        <label for="wordCount">Número de palavras:</label>
+        <select id="wordCount" onchange="updateWordCount()">
+            <option value="12">12</option>
+            <option value="18">18</option>
+            <option value="24">24</option>
+        </select>
+        
+        <button onclick="generateRandomWords()">Gerar Palavras Aleatórias</button>
+        <button class="clear" onclick="clearAllWords()">Limpar</button>
+    </div>
+
+    <div class="main-container" id="inputs">
+        <div class="column-container" id="left-column"></div>
+        <div class="column-container" id="right-column"></div>
+    </div>
+
+    <div class="results-container" id="results-container"></div>
+
+    <div class="passphrase-container">
+        <h3>String da Passphrase Final</h3>
+        <div class="result-section">
+            <div class="flex-input" style="justify-content: center;">
+                <input type="text" id="passphraseString" readonly>
+            </div>
+            <div class="copy-hint">Clique na string para copiar</div>
+        </div>
+        
+        <h3>Passphrase Final</h3>
+        <div class="result-section">
+            <div class="flex-input" style="justify-content: center;">
+                <input type="text" id="passphrase" readonly>
+            </div>
+            <span class="toggle-visibility" onclick="toggleVisibility('passphrase')">👁️</span>
+            <div class="copy-hint">Clique no hash para copiar</div>
+        </div>
+    </div>
+    
+    <div class="hash-checker-container" id="hash-checker">
+        <h3>Verificação de Hash Avulso</h3>
+        <div class="result-section">
+            <span>String para Hash:</span>
+            <input type="text" id="hashInput" placeholder="Digite a string">
+        
+            <div class="hash-container">
+                <div><h3></h3></div>
+                <span>Hash:</span>
+                <div class="flex-input">
+                    <input type="text" id="hashResult" readonly>
+                </div>
+                <span class="toggle-visibility" onclick="toggleVisibility('hashResult')">👁️</span>
+                <div class="copy-hint">Clique no hash para copiar</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copiado para a área de transferência!</div>
+
+    <script src="crypto-js-develop/src/core.js"></script>
+    <script src="crypto-js-develop/src/md5.js"></script>
+    <script src="wordlist_bip39.js"></script>
+    <script>
+        let wordlist = bip39Wordlist;
+        const hiddenValues = {};
+        let currentWordCount = 12;
+
+        function generateFields(wordCount) {
+            const leftColumn = document.getElementById('left-column');
+            const rightColumn = document.getElementById('right-column');
+            leftColumn.innerHTML = '';
+            rightColumn.innerHTML = '';
+            
+            for (let i = 0; i < wordCount; i++) {
+                const seedItem = document.createElement('div');
+                seedItem.className = 'seed-item';
+                
+                const seedNumber = document.createElement('div');
+                seedNumber.className = 'seed-number';
+                seedNumber.textContent = `#${i+1}`;
+                
+                const wordInput = document.createElement('input');
+                wordInput.type = 'text';
+                wordInput.id = `word_${i+1}`;
+                wordInput.placeholder = `Seed_${i+1}`;
+                wordInput.oninput = () => checkWord(wordInput, i+1);
+
+                const positionInput = document.createElement('input');
+                positionInput.type = 'text';
+                positionInput.id = `position_${i+1}`;
+                positionInput.placeholder = `Position_${i+1}`;
+                positionInput.readOnly = true;
+                positionInput.tabIndex = -1;
+                
+                seedItem.appendChild(seedNumber);
+                seedItem.appendChild(wordInput);
+                seedItem.appendChild(positionInput);
+
+                if (i < Math.ceil(wordCount / 2)) {
+                    leftColumn.appendChild(seedItem);
+                } else {
+                    rightColumn.appendChild(seedItem);
+                }
+            }
+            
+            currentWordCount = wordCount;
+            createResultSections(wordCount);
+        }
+
+        function createResultSections(wordCount) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = '';
+            
+            const blockCount = Math.ceil(wordCount / 6);
+            for (let i = 0; i < blockCount; i++) {
+                const startWord = i * 6 + 1;
+                const endWord = Math.min((i + 1) * 6, wordCount);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `
+                    <h3>Resultado (Palavras ${startWord}-${endWord})</h3>
+                    <div class="result-section">
+                        <span>String:</span>
+                        <input type="text" id="string${i}" readonly>
+                        <div class="hash-container">
+                            <div><h3></h3></div>
+                            <span>Hash:</span>
+                            <div class="flex-input">
+                                <input type="text" id="hash${i}" readonly>
+                            </div>
+                            <span class="toggle-visibility" onclick="toggleVisibility('hash${i}')">👁️</span>
+                            <div class="copy-hint">Clique no hash para copiar</div>
+                        </div>
+                    </div>
+                `;
+                resultsContainer.appendChild(resultDiv);
+            }
+        }
+
+        function updateWordCount() {
+            const wordCount = parseInt(document.getElementById('wordCount').value);
+            generateFields(wordCount);
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('passphrase').value = '';
+            document.getElementById('passphraseString').value = '';
+            const resultsContainer = document.getElementById('results-container');
+            const stringInputs = resultsContainer.querySelectorAll('input[id^="string"]');
+            const hashInputs = resultsContainer.querySelectorAll('input[id^="hash"]');
+            
+            stringInputs.forEach(input => input.value = '');
+            hashInputs.forEach(input => input.value = '');
+        }
+
+        function clearAllWords() {
+            for (let i = 1; i <= currentWordCount; i++) {
+                const wordInput = document.getElementById(`word_${i}`);
+                const positionInput = document.getElementById(`position_${i}`);
+                
+                wordInput.value = '';
+                positionInput.value = '';
+                wordInput.classList.remove('found', 'not-found', 'duplicate');
+            }
+            
+            // Limpar campo de string para hash
+            document.getElementById('hashInput').value = '';
+            
+            // Limpar campo de hash resultante
+            document.getElementById('hashResult').value = '';
+            hiddenValues.hashResult = '';
+            
+            clearResults();
+        }
+
+        function generateRandomWords() {
+            const usedWords = new Set();
+            
+            for (let i = 1; i <= currentWordCount; i++) {
+                let randomWord;
+                do {
+                    const randomIndex = Math.floor(Math.random() * wordlist.length);
+                    randomWord = wordlist[randomIndex];
+                } while (usedWords.has(randomWord));
+                
+                usedWords.add(randomWord);
+                document.getElementById(`word_${i}`).value = randomWord;
+                checkWord(document.getElementById(`word_${i}`), i);
+            }
+        }
+
+        function checkWord(input, index) {
+            const word = input.value.trim();
+            const positionInput = document.getElementById(`position_${index}`);
+            const pos = wordlist.indexOf(word);
+
+            if (pos !== -1) {
+                positionInput.value = pos + 1;
+                input.classList.add('found');
+                input.classList.remove('not-found');
+            } else {
+                positionInput.value = 'Não encontrada';
+                input.classList.add('not-found');
+                input.classList.remove('found');
+            }
+
+            highlightDuplicates();
+            calculateHashes();
+        }
+
+        function highlightDuplicates() {
+            const wordCounts = {};
+            for (let i = 1; i <= currentWordCount; i++) {
+                const word = document.getElementById(`word_${i}`).value.trim();
+                if (word) {
+                    wordCounts[word] = (wordCounts[word] || 0) + 1;
+                }
+            }
+
+            for (let i = 1; i <= currentWordCount; i++) {
+                const wordInput = document.getElementById(`word_${i}`);
+                const word = wordInput.value.trim();
+                if (word && wordCounts[word] > 1) {
+                    wordInput.classList.add('duplicate');
+                } else {
+                    wordInput.classList.remove('duplicate');
+                }
+            }
+        }
+
+        function calculateHashes() {
+            const blockCount = Math.ceil(currentWordCount / 6);
+            const blockHashes = [];
+            let allBlocksValid = true;
+
+            for (let i = 0; i < blockCount; i++) {
+                const startIdx = i * 6;
+                const endIdx = Math.min((i + 1) * 6, currentWordCount);
+                const words = [];
+                let blockValid = true;
+
+                for (let j = startIdx; j < endIdx; j++) {
+                    const word = document.getElementById(`word_${j+1}`).value.trim();
+                    if (word) {
+                        words.push(word);
+                        const positionInput = document.getElementById(`position_${j+1}`);
+                        if (positionInput.value === 'Não encontrada') {
+                            blockValid = false;
+                        }
+                    } else {
+                        blockValid = false;
+                    }
+                }
+
+                const string = words.join(' ');
+                const hash = (blockValid && words.length === (endIdx - startIdx)) 
+                    ? CryptoJS.MD5(string).toString() 
+                    : '';
+
+                document.getElementById(`string${i}`).value = string;
+                hiddenValues[`hash${i}`] = hash;
+                document.getElementById(`hash${i}`).value = formatHiddenValue(hash);
+                
+                if (hash) {
+                    blockHashes.push(hash);
+                } else {
+                    allBlocksValid = false;
+                }
+            }
+
+            const concatenatedHashes = blockHashes.join('');
+            const passphrase = (allBlocksValid && blockHashes.length === blockCount)
+                ? CryptoJS.MD5(concatenatedHashes).toString()
+                : '';
+
+            hiddenValues.passphrase = passphrase;
+            hiddenValues.passphraseString = concatenatedHashes;
+            document.getElementById('passphrase').value = formatHiddenValue(passphrase);
+            document.getElementById('passphraseString').value = formatHiddenValue(concatenatedHashes);
+        }
+
+        function toggleVisibility(id) {
+            const element = document.getElementById(id);
+            const isHidden = element.value !== hiddenValues[id];
+            element.value = isHidden ? hiddenValues[id] : formatHiddenValue(hiddenValues[id]);
+        }
+
+        function formatHiddenValue(value) {
+            return value ? `${value.slice(0, 5)}◆◆◆◆◆◆${value.slice(-5)}` : '';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+            }).catch(err => {
+                console.error('Erro ao copiar: ', err);
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Adicionar eventos de clique para copiar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Evento para o botão de gerar palavras aleatórias
+            document.querySelector('button').addEventListener('click', generateRandomWords);
+            
+            // Eventos para copiar seeds
+            document.addEventListener('click', (e) => {
+                // Copiar seeds individuais
+                if (e.target.id && e.target.id.startsWith('word_') && !e.target.readOnly) {
+                    const wordValue = e.target.value.trim();
+                    if (wordValue) {
+                        copyToClipboard(wordValue);
+                    }
+                }
+                
+                // Copiar hashes
+                if (e.target.id && e.target.id.startsWith('hash') && e.target.readOnly) {
+                    const id = e.target.id;
+                    copyToClipboard(hiddenValues[id]);
+                }
+                
+                if (e.target.id === 'passphrase' && e.target.readOnly) {
+                    copyToClipboard(hiddenValues.passphrase);
+                }
+                
+                if (e.target.id === 'passphraseString' && e.target.readOnly) {
+                    copyToClipboard(hiddenValues.passphraseString);
+                }
+                
+                if (e.target.id === 'hashResult' && e.target.readOnly) {
+                    copyToClipboard(hiddenValues.hashResult);
+                }
+            });
+        });
+
+        // Inicialização
+        generateFields(12);
+        
+        // Função para calcular o hash do campo de entrada de hash avulso
+        document.getElementById('hashInput').addEventListener('input', () => {
+            const inputString = document.getElementById('hashInput').value.trim();
+            const hashValue = inputString ? CryptoJS.MD5(inputString).toString() : '';
+            
+            hiddenValues.hashResult = hashValue;
+            document.getElementById('hashResult').value = formatHiddenValue(hashValue);
+        });
+    </script>
+</body>
+</html>
