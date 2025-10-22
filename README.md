@@ -38,8 +38,8 @@ A aplicação utiliza uma sistemática especial para dividir e proteger seeds:
 
 ```
 Seed Completo: [P1] [P2] [P3] [P4] [P5] [P6] [P7] [P8] [P9] [P10] [P11] [P12]
-                |                          ||                               |
-                └─────── BLOCO 1 ──────────┘└────────── BLOCO 2 ────────────┘
+                |                          | |                              |
+                └─────── BLOCO 1 ──────────┘ └───────── BLOCO 2 ────────────┘
 
 Bloco 1: String = "P1 P2 P3 P4 P5 P6"
          Hash1 = MD5("P1 P2 P3 P4 P5 P6")
