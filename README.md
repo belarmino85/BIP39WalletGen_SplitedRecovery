@@ -62,7 +62,7 @@ graph TD
     E --> G[Armazena de forma segura]
     F --> H[Armazena de forma segura]
     I[Combinação dos Hashes] --> J[Hash1 + Hash2]
-    J --> K[MD5(Hash1 + Hash2)]
+    J --> K["MD5(Hash1 + Hash2)"]
     K --> L[Passphrase Final]
 ```
 
