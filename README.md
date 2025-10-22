@@ -1,0 +1,1 @@
+# BIP39WalletGen_SplitedRecovery
